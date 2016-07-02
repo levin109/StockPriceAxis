@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock-Price-Axis</title>
+    <script src="//cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <div id="progress">
+        <!--<div class="progress-item">
+            <div class="pg-toptext">
+                <div class="pg-text">
+                    <span>-22</span>
+                </div>
+                <div class="pg-text">
+                    <span>-11</span>
+                </div>
+                <div class="pg-text">
+                    <span>00</span>
+                </div>
+                <div class="pg-text">
+                    <span>11</span>
+                </div>
+                <div class="pg-text">
+                    <span>22</span>
+                </div>
+            </div>
+            <div class="pg-axis">
+            </div>
+            <div class="pg-ords">
+                <div class="pg-ord">
+                    <span></span>
+                </div>
+                <div class="pg-ord">
+                    <span></span>
+                </div>
+                <div class="pg-ord">
+                    <span></span>
+                </div>
+                <div class="pg-ord">
+                    <span></span>
+                </div>
+                <div class="pg-ord">
+                    <span></span>
+                </div>
+            </div>
+            <div class="pg-bottext">
+
+                <div class="pg-text">
+                    <span>-2</span>
+                </div>
+                <div class="pg-text">
+                    <span>-1</span>
+                </div>
+                <div class="pg-text">
+                    <span>0</span>
+                </div>
+                <div class="pg-text">
+                    <span>1</span>
+                </div>
+                <div class="pg-text">
+                    <span>2</span>
+                </div>
+
+            </div>
+            <div class="progress-now">
+
+            </div>
+        </div>-->
+
+    </div>
+    <script>
+        $(function () {
+
+            var n = 6;
+            var inc = 0.5;
+            var price = 1;
+            var code = "159915";
+            var codeName = "创业板";
+
+            var axis1 = new PriceAxis(n, inc, price, 'progress', code, codeName);
+            axis1.generateAxis();
+            // axis1.reportProgress(0.986);
+
+            //模拟实时价格变化
+            var priceRealTime = price
+            window.setInterval(function () {
+                priceRealTime = (priceRealTime * (1 + (0.5 - Math.random()) / 100)).toFixed(3);
+                axis1.reportProgress(priceRealTime, ((priceRealTime - 1) / 0.9 * 100).toFixed(2));
+            }, 2000);
+
+            //------------------------------------------------------------------
+            var code = "501300";
+            var codeName = "300ETF";
+            var axis2 = new PriceAxis(n, inc, price, 'progress', code, codeName);
+            axis2.generateAxis();
+            // axis1.reportProgress(0.986);
+
+            //模拟实时价格变化
+            var priceRealTime = price
+            window.setInterval(function () {
+                priceRealTime = (priceRealTime * (1 + (0.5 - Math.random()) / 100)).toFixed(3);
+                axis2.reportProgress(priceRealTime, ((priceRealTime - 1) / 0.9 * 100).toFixed(2));
+            }, 2000);
+
+
+        })
+
+
+
+
+
+
+        function PriceAxis(n, inc, price, wrapperId, code, codeName) {
+
+            //私有变量
+            var width = 1.0 * 100 / (2 * (n + 1));
+            var itemId = 'pg' + code;
+            var minPrice = 0;
+            var maxPrice = 0;
+
+            //私有方法
+            function setColor(ptext, incNow) {
+                var text = "";
+                if (incNow < 0)
+                    text = ptext.replace('$color', 'green');
+                else if (incNow > 0)
+                    text = ptext.replace('$color', 'red');
+                else
+                    text = ptext.replace('$color', "#333");
+
+                return text;
+            }
+
+            this.generateAxis = function () {
+                var nn1 = 2 * n + 1;
+                var nn = 2 * (n + 1);
+                var axis = '<div class="pg-axis" style="margin: 0 ' + width + '%"></div>';
+                var ptext = '<div class="pg-text" style="margin-left: -' + width + '%;width: ' + (width * 2) + '%;"><span style="color:$color">$number</span></div>';
+                var ords = '<div class="pg-ord" style="width:' + width + '%"><span></span></div>';
+                var codeInfo = '<div class="code-info"><span>' + code + '</span><span>' + codeName + '</span></div>';
+
+                var ptextTop = "";
+                var ptextBot = "";
+                var pords = "";
+                var minRise = -n * inc;
+
+                minPrice = price * (1 + minRise / 100).toFixed(3);
+                maxPrice = price * (1 - minRise / 100).toFixed(3);
+
+                for (var i = 0; i < nn1; i++) {
+                    var incNow = minRise + i * inc;
+                    ptextTop += setColor(ptext.replace("$number", ((1 + incNow / 100) * price).toFixed(3)), incNow);
+                    ptextBot += setColor(ptext.replace("$number", incNow + "%"), incNow);
+                    pords += ords;
+                }
+
+                var html = '<div id="' + itemId + '" class="progress-item">$codeInfo<div class="price-now">实时价格：<span>-</span>实时涨跌：<span>-</span>相对涨跌：<span>-</span></div><div class="pg-toptext">$ptextTop</div>$axis<div class="pg-ords">$pords</div><div class="pg-bottext">$ptextBot</div><div class="progress-now"></div></div>';
+                html = html.replace('$codeInfo', codeInfo).replace('$ptextTop', ptextTop).replace('$axis', axis).replace('$pords', pords).replace('$ptextBot', ptextBot);
+                htmlNode = $(html);
+                $('#' + wrapperId).append(html);
+
+            };
+
+            this.reportProgress = function (priceNow, realtimeInc) {
+                $('#' + itemId).find('.price-now span:nth-child(1)').text(priceNow);
+                var incNow = ((priceNow - price) / price * 100).toFixed(2);
+                if (priceNow < price)
+                    $('#' + itemId).find('.price-now span:nth-child(3)').css('color', 'green').text(incNow + "%");
+                else if (priceNow > price)
+                    $('#' + itemId).find('.price-now span:nth-child(3)').css('color', 'red').text(incNow + "%");
+                else
+                    $('#' + itemId).find('.price-now span:nth-child(3)').css('color', '#333').text(incNow + "%");
+
+                if (realtimeInc) {
+                    if (realtimeInc < 0)
+                        $('#' + itemId).find('.price-now span:nth-child(2)').css('color', 'green').text(realtimeInc + "%");
+                    else if (realtimeInc > 0)
+                        $('#' + itemId).find('.price-now span:nth-child(2)').css('color', 'red').text(realtimeInc + "%");
+                    else
+                        $('#' + itemId).find('.price-now span:nth-child(2)').css('color', '#333').text(realtimeInc + "%");
+                }
+
+                if (priceNow < minPrice)
+                    priceNow = minPrice;
+                else if (priceNow > maxPrice)
+                    priceNow = maxPrice;
+                incNow = (priceNow - price) / price * 100;
+                var factor = Math.abs(incNow / inc);
+                var wdt = factor * width;
+                if (priceNow < price)
+                    $('#' + itemId).find('.progress-now').css({ 'margin-left': (50 - wdt) + "%", 'background-color': 'green', 'width': wdt + "%" });
+                else
+                    $('#' + itemId).find('.progress-now').css({ 'margin-left': 50 + "%", 'background-color': 'red', 'width': wdt + "%" });
+
+            }
+
+
+        }
+
+
+
+
+
+
+    </script>
+    <style>
+        body {
+            padding: 60px 15px;
+            margin: 0;
+        }
+
+        /*#progress .progress-item .pg-ords .pg-ord {
+            width: 16.66667%;
+        }
+
+        #progress .progress-item .pg-axis {
+            margin: 0 16.666667%;
+        }
+
+        #progress .progress-item .pg-text {
+            margin-left: -16.66667%;
+            width: 33.3%;
+        }*/
+
+        #progress .progress-item .pg-bottext {
+            padding-top: 20px;
+        }
+
+        #progress .progress-item .pg-axis {
+            border-top: 1px solid #aaa;
+            margin-bottom: -7px !important;
+        }
+
+        #progress .progress-item .pg-ords .pg-ord {
+            float: left;
+        }
+
+            #progress .progress-item .pg-ords .pg-ord span {
+                border-right: 1px solid #aaa;
+                display: block;
+                height: 12px;
+            }
+
+        #progress .progress-item .pg-toptext {
+            padding-bottom: 30px;
+        }
+
+        #progress .progress-item .pg-text {
+            float: left;
+            text-align: center;
+            font-size: 13px;
+            font-family: Menlo, Monaco, "Andale Mono", "lucida console", "Courier New", monospace;
+        }
+
+        #progress .progress-item .pg-toptext .pg-text:first-child,
+        #progress .progress-item .pg-bottext .pg-text:first-child {
+            margin-left: 0 !important;
+        }
+
+        #progress .progress-item .pg-bottext .pg-text:last-child {
+        }
+
+
+        #progress .progress-item .progress-now {
+            background-color: red;
+            height: 4px;
+            margin-top: -16px;
+            margin-left: 50%;
+            width: 0;
+            transition: all 0.6s ease-in;
+        }
+
+
+        #progress .progress-item {
+            height: 130px;
+            padding-bottom: 26px;
+        }
+
+            #progress .progress-item .code-info {
+                text-align: center;
+                margin-bottom: 12px;
+            }
+
+                #progress .progress-item .code-info span {
+                    margin-right: 30px;
+                    font-size: 15px;
+                }
+
+            #progress .progress-item .price-now {
+                font-size: 13px;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+
+                #progress .progress-item .price-now span {
+                    font-size: 15px;
+                    width: 76px;
+                    display: inline-block;
+                    text-align: left;
+                }
+    </style>
+</body>
+</html>
